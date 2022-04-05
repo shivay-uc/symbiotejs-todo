@@ -1,19 +1,19 @@
-import { BaseComponent } from 'https://symbiotejs.github.io/symbiote.js/core/BaseComponent.js';
-import { AppRouter } from 'https://symbiotejs.github.io/symbiote.js/core/AppRouter.js';
+import { BaseComponent } from "https://symbiotejs.github.io/symbiote.js/core/BaseComponent.js";
+import { AppRouter } from "https://symbiotejs.github.io/symbiote.js/core/AppRouter.js";
 
-AppRouter.createRouterData('router', {
+AppRouter.createRouterData("router", {
   all: {
-    title: 'All',
+    title: "All",
     default: true,
   },
   active: {
-    title: 'Active',
+    title: "Active",
   },
   completed: {
-    title: 'Completed',
+    title: "Completed",
   },
   error: {
-    title: 'Error',
+    title: "Error",
     error: true,
   },
 });
@@ -24,34 +24,51 @@ class ListItem extends BaseComponent {
     this.data = text;
   }
   init$ = {
-    text: '',
+    text: "",
     remove: () => {
       this.remove();
     },
     marked_check: () => {
-      this.ref.complete.classList.toggle('completed');
+      this.ref.complete.classList.toggle("completed");
+
+      const currLeft = document.getElementById("left-items");
+
+      currLeft.innerText = this.ref.complete.classList.contains("completed")
+        ? parseInt(currLeft.innerText) - 1
+        : parseInt(currLeft.innerText) + 1;
     },
   };
 
   get checked() {
     return this.ref.checkbox.checked;
   }
+
+  updateCounterState(delta) {
+    const currLeft = document.getElementById("left-items");
+
+    currLeft.innerText = parseInt(currLeft.innerText) + delta;
+  }
+
   make_check() {
-    this.ref.complete.classList.add('completed');
+    this.ref.complete.classList.add("completed");
     this.ref.checkbox.checked = true;
+
+    this.updateCounterState(-1);
   }
   remove_check() {
-    this.ref.complete.classList.remove('completed');
+    this.ref.complete.classList.remove("completed");
     this.ref.checkbox.checked = false;
+
+    this.updateCounterState(1);
   }
   initCallback() {
     this.$.text = this.data;
   }
   show() {
-    this.ref.complete.style.display = 'block';
+    this.ref.complete.style.display = "block";
   }
   hide() {
-    this.ref.complete.style.display = 'none';
+    this.ref.complete.style.display = "none";
   }
 }
 
@@ -64,7 +81,7 @@ ListItem.template = `
     </div>
 </li>
 `;
-ListItem.reg('list-item');
+ListItem.reg("list-item");
 
 class MyComponent extends BaseComponent {
   get items() {
@@ -72,12 +89,16 @@ class MyComponent extends BaseComponent {
   }
   init$ = {
     createNote: (e) => {
-      if (e.code == 'Enter' && e.target.value.length) {
+      if (e.code == "Enter" && e.target.value.length) {
         this.ref.list_wrapper.insertBefore(
           new ListItem(e.target.value),
           this.ref.list_wrapper.firstChild
         );
-        e.target.value = '';
+        e.target.value = "";
+
+        const currLeft = document.getElementById("left-items");
+
+        currLeft.innerText = parseInt(currLeft.innerText) + 1;
       }
     },
     removeChecked: () => {
@@ -88,27 +109,27 @@ class MyComponent extends BaseComponent {
       });
     },
     completeAll: () => {
-      if (this.ref.impact_all.getAttribute('data-checked') === 'active') {
+      if (this.ref.impact_all.getAttribute("data-checked") === "active") {
         this.items.forEach((item) => {
           if (!item.checked) {
             item.make_check();
           }
         });
-        this.ref.impact_all.setAttribute('data-checked', 'inactive');
+        this.ref.impact_all.setAttribute("data-checked", "inactive");
       } else {
         this.items.forEach((item) => {
           if (item.checked) {
             item.remove_check();
           }
         });
-        this.ref.impact_all.setAttribute('data-checked', 'active');
+        this.ref.impact_all.setAttribute("data-checked", "active");
       }
     },
     onAll: () => {
       this.items.forEach((item) => {
         item.show();
       });
-      AppRouter.applyRoute('all');
+      AppRouter.applyRoute("all");
     },
     onActive: () => {
       this.items.forEach((item) => {
@@ -119,7 +140,7 @@ class MyComponent extends BaseComponent {
           item.hide();
         }
       });
-      AppRouter.applyRoute('active');
+      AppRouter.applyRoute("active");
     },
     onComplete: () => {
       this.items.forEach((item) => {
@@ -130,16 +151,23 @@ class MyComponent extends BaseComponent {
           item.hide();
         }
       });
-      AppRouter.applyRoute('completed');
+      AppRouter.applyRoute("completed");
     },
   };
 
   initCallback() {
-    console.log('fff');
+    let leftItems = 0;
+    this.items.forEach((item) => {
+      if (!item.checked) {
+        leftItems++;
+      }
+    });
+
+    document.getElementById("left-items").innerText = leftItems;
   }
 }
 
-MyComponent.template = `
+MyComponent.template += `
       <div class="todoapp">
         <header class="header">
           <h1>todos</h1>
@@ -164,17 +192,17 @@ MyComponent.template = `
         </section>
         <footer class="footer">
             <span class="todo-count">
-              <strong>4</strong> items left
+              <strong id="left-items">5</strong> items left
             </span>
             <ul class="filters">
               <li >
-                <a href='#' set = "onclick : onAll" class="">All</a>
+                <a set = "onclick : onAll" class="">All</a>
                </li>
               <li class="selected">
-                <a href='#' set = "onclick : onActive" set="onclick: onActive" class="">Active</a>
+                <a set = "onclick : onActive" set="onclick: onActive" class="">Active</a>
               </li>
-              <li class="selected">
-                <a href='#' set = "onclick : onComplete" class="">Completed</a>
+              <li class="selected" set="onclick: changeStatus('complete')">
+                <a set = "onclick : onComplete" class="">Completed</a>
               </li>
             </ul>
             <button class="clear-completed" set="onclick: removeChecked">
@@ -185,4 +213,4 @@ MyComponent.template = `
       </div>
 
     `;
-MyComponent.reg('my-component');
+MyComponent.reg("my-component");

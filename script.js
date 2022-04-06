@@ -19,24 +19,69 @@ AppRouter.createRouterData("router", {
 });
 
 class ListItem extends BaseComponent {
-  constructor(text) {
+  constructor(text, idx) {
     super();
     this.data = text;
+    this.idx = idx;
   }
   init$ = {
     text: "",
+    fetchState: () => {
+      let localState = localStorage.getItem("state");
+      if (!localState) {
+        localState = [];
+      } else {
+        localState = JSON.parse(localState);
+      }
+
+      return localState;
+    },
+    updateLocalState: (arr) => {
+      localStorage.setItem("state", JSON.stringify(arr));
+    },
     remove: () => {
+      let currState = this.$.fetchState();
+
+      currState.map(({ idx }) => {
+        if (idx > this.$.idx) {
+          idx -= 1;
+        }
+      });
+
+      currState.splice(this.$.idx, 1);
+      console.log(currState);
+
+      this.$.updateLocalState(currState);
+
+      const currLeft = document.getElementById("left-items");
+
+      if (!this.ref.complete.classList.contains("completed")) {
+        currLeft.innerText = parseInt(currLeft.innerText) - 1;
+      }
+
       this.remove();
     },
+
     marked_check: () => {
       this.ref.complete.classList.toggle("completed");
 
       const currLeft = document.getElementById("left-items");
 
+      const currState = this.$.fetchState();
+
       currLeft.innerText = this.ref.complete.classList.contains("completed")
         ? parseInt(currLeft.innerText) - 1
         : parseInt(currLeft.innerText) + 1;
+
+      currState[this.$.idx].checked = this.ref.complete.classList.contains(
+        "completed"
+      )
+        ? true
+        : false;
+
+      this.$.updateLocalState(currState);
     },
+    idx: 0,
   };
 
   get checked() {
@@ -49,20 +94,35 @@ class ListItem extends BaseComponent {
     currLeft.innerText = parseInt(currLeft.innerText) + delta;
   }
 
+  updateStateOnChange(delta) {
+    const currState = this.$.fetchState();
+
+    currState[this.$.idx].checked = delta;
+
+    this.$.updateLocalState(currState);
+  }
+  removeWrapper() {
+    this.$.remove();
+  }
+
   make_check() {
     this.ref.complete.classList.add("completed");
     this.ref.checkbox.checked = true;
 
     this.updateCounterState(-1);
+    this.updateStateOnChange(true);
   }
   remove_check() {
     this.ref.complete.classList.remove("completed");
     this.ref.checkbox.checked = false;
 
     this.updateCounterState(1);
+
+    this.updateStateOnChange(false);
   }
   initCallback() {
     this.$.text = this.data;
+    this.$.idx = this.idx;
   }
   show() {
     this.ref.complete.style.display = "block";
@@ -88,23 +148,51 @@ class MyComponent extends BaseComponent {
     return [...this.ref.list_wrapper.children];
   }
   init$ = {
+    fetchState: () => {
+      let localState = localStorage.getItem("state");
+      if (!localState) {
+        localState = [];
+      } else {
+        localState = JSON.parse(localState);
+      }
+      return localState;
+    },
     createNote: (e) => {
       if (e.code == "Enter" && e.target.value.length) {
         this.ref.list_wrapper.insertBefore(
-          new ListItem(e.target.value),
+          new ListItem(e.target.value, this.$.initIdx),
           this.ref.list_wrapper.firstChild
         );
-        e.target.value = "";
-
         const currLeft = document.getElementById("left-items");
 
         currLeft.innerText = parseInt(currLeft.innerText) + 1;
+
+        const currState = this.$.fetchState();
+
+        currState.push({ text: e.target.value, checked: false });
+
+        localStorage.setItem("state", JSON.stringify(currState));
+
+        this.$.initIdx += 1;
+
+        e.target.value = "";
+      }
+    },
+    createNoteFromLocalStorage: (text, isActive) => {
+      console.log(isActive);
+      const listItem = new ListItem(text, this.$.initIdx);
+      this.ref.list_wrapper.insertBefore(
+        listItem,
+        this.ref.list_wrapper.firstChild
+      );
+      if (isActive) {
+        listItem.make_check();
       }
     },
     removeChecked: () => {
       this.items.forEach((item) => {
         if (item.checked) {
-          item.remove();
+          item.removeWrapper();
         }
       });
     },
@@ -153,6 +241,7 @@ class MyComponent extends BaseComponent {
       });
       AppRouter.applyRoute("completed");
     },
+    initIdx: 0,
   };
 
   initCallback() {
@@ -164,10 +253,26 @@ class MyComponent extends BaseComponent {
     });
 
     document.getElementById("left-items").innerText = leftItems;
+
+    const currState = this.$.fetchState();
+
+    const currLeft = document.getElementById("left-items");
+    let tempCount = 0;
+
+    currState.map((item) => {
+      this.$.createNoteFromLocalStorage(item.text, item.checked);
+      this.$.initIdx++;
+
+      if (!item.checked) {
+        tempCount++;
+      }
+    });
+
+    currLeft.innerText = tempCount;
   }
 }
 
-MyComponent.template += `
+MyComponent.template = `
       <div class="todoapp">
         <header class="header">
           <h1>todos</h1>

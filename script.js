@@ -1,19 +1,19 @@
-import { BaseComponent } from 'https://symbiotejs.github.io/symbiote.js/core/BaseComponent.js';
-import { AppRouter } from 'https://symbiotejs.github.io/symbiote.js/core/AppRouter.js';
+import { BaseComponent } from "https://symbiotejs.github.io/symbiote.js/core/BaseComponent.js";
+import { AppRouter } from "https://symbiotejs.github.io/symbiote.js/core/AppRouter.js";
 
-AppRouter.createRouterData('router', {
+AppRouter.createRouterData("router", {
   all: {
-    title: 'All',
+    title: "All",
     default: true,
   },
   active: {
-    title: 'Active',
+    title: "Active",
   },
   completed: {
-    title: 'Completed',
+    title: "Completed",
   },
   error: {
-    title: 'Error',
+    title: "Error",
     error: true,
   },
 });
@@ -25,9 +25,9 @@ class ListItem extends BaseComponent {
     this.idx = idx;
   }
   init$ = {
-    text: '',
+    text: "",
     fetchState: () => {
-      let localState = localStorage.getItem('state');
+      let localState = localStorage.getItem("state");
       if (!localState) {
         localState = [];
       } else {
@@ -37,7 +37,7 @@ class ListItem extends BaseComponent {
       return localState;
     },
     updateLocalState: (arr) => {
-      localStorage.setItem('state', JSON.stringify(arr));
+      localStorage.setItem("state", JSON.stringify(arr));
     },
     remove: () => {
       let currState = this.$.fetchState();
@@ -53,9 +53,9 @@ class ListItem extends BaseComponent {
 
       this.$.updateLocalState(currState);
 
-      const currLeft = document.getElementById('left-items');
+      const currLeft = document.getElementById("left-items");
 
-      if (!this.ref.complete.classList.contains('completed')) {
+      if (!this.ref.complete.classList.contains("completed")) {
         currLeft.innerText = parseInt(currLeft.innerText) - 1;
       }
 
@@ -63,18 +63,18 @@ class ListItem extends BaseComponent {
     },
 
     marked_check: () => {
-      this.ref.complete.classList.toggle('completed');
+      this.ref.complete.classList.toggle("completed");
 
-      const currLeft = document.getElementById('left-items');
+      const currLeft = document.getElementById("left-items");
 
       const currState = this.$.fetchState();
 
-      currLeft.innerText = this.ref.complete.classList.contains('completed')
+      currLeft.innerText = this.ref.complete.classList.contains("completed")
         ? parseInt(currLeft.innerText) - 1
         : parseInt(currLeft.innerText) + 1;
 
       currState[this.$.idx].checked = this.ref.complete.classList.contains(
-        'completed'
+        "completed"
       )
         ? true
         : false;
@@ -89,7 +89,7 @@ class ListItem extends BaseComponent {
   }
 
   updateCounterState(delta) {
-    const currLeft = document.getElementById('left-items');
+    const currLeft = document.getElementById("left-items");
 
     currLeft.innerText = parseInt(currLeft.innerText) + delta;
   }
@@ -106,14 +106,14 @@ class ListItem extends BaseComponent {
   }
 
   make_check() {
-    this.ref.complete.classList.add('completed');
+    this.ref.complete.classList.add("completed");
     this.ref.checkbox.checked = true;
 
     this.updateCounterState(-1);
     this.updateStateOnChange(true);
   }
   remove_check() {
-    this.ref.complete.classList.remove('completed');
+    this.ref.complete.classList.remove("completed");
     this.ref.checkbox.checked = false;
 
     this.updateCounterState(1);
@@ -125,10 +125,10 @@ class ListItem extends BaseComponent {
     this.$.idx = this.idx;
   }
   show() {
-    this.ref.complete.style.display = 'block';
+    this.ref.complete.style.display = "block";
   }
   hide() {
-    this.ref.complete.style.display = 'none';
+    this.ref.complete.style.display = "none";
   }
 }
 
@@ -141,7 +141,7 @@ ListItem.template = `
     </div>
 </li>
 `;
-ListItem.reg('list-item');
+ListItem.reg("list-item");
 
 class MyComponent extends BaseComponent {
   get items() {
@@ -149,7 +149,7 @@ class MyComponent extends BaseComponent {
   }
   init$ = {
     fetchState: () => {
-      let localState = localStorage.getItem('state');
+      let localState = localStorage.getItem("state");
       if (!localState) {
         localState = [];
       } else {
@@ -158,12 +158,12 @@ class MyComponent extends BaseComponent {
       return localState;
     },
     createNote: (e) => {
-      if (e.code == 'Enter' && e.target.value.length) {
+      if (e.code == "Enter" && e.target.value.length) {
         this.ref.list_wrapper.insertBefore(
           new ListItem(e.target.value, this.$.initIdx),
           this.ref.list_wrapper.firstChild
         );
-        const currLeft = document.getElementById('left-items');
+        const currLeft = document.getElementById("left-items");
 
         currLeft.innerText = parseInt(currLeft.innerText) + 1;
 
@@ -171,14 +171,15 @@ class MyComponent extends BaseComponent {
 
         currState.push({ text: e.target.value, checked: false });
 
-        localStorage.setItem('state', JSON.stringify(currState));
+        localStorage.setItem("state", JSON.stringify(currState));
 
         this.$.initIdx += 1;
 
-        e.target.value = '';
+        e.target.value = "";
       }
     },
     createNoteFromLocalStorage: (text, isActive) => {
+      console.log(isActive);
       const listItem = new ListItem(text, this.$.initIdx);
       this.ref.list_wrapper.insertBefore(
         listItem,
@@ -196,33 +197,56 @@ class MyComponent extends BaseComponent {
       });
     },
     completeAll: () => {
-      if (this.ref.impact_all.getAttribute('data-checked') === 'active') {
+      if (this.ref.impact_all.getAttribute("data-checked") === "active") {
         this.items.forEach((item) => {
           if (!item.checked) {
             item.make_check();
           }
         });
-        this.ref.impact_all.setAttribute('data-checked', 'inactive');
+        this.ref.impact_all.setAttribute("data-checked", "inactive");
       } else {
         this.items.forEach((item) => {
           if (item.checked) {
             item.remove_check();
           }
         });
-        this.ref.impact_all.setAttribute('data-checked', 'active');
+        this.ref.impact_all.setAttribute("data-checked", "active");
       }
     },
     onAll: () => {
+      let tempCount = this.$.fetchState().length;
+      this.items.forEach((item) => {
+        item.show();
+        if (item.checked) {
+          tempCount--;
+        }
+      });
+      AppRouter.applyRoute("all");
+
+      document.getElementById("left-items").innerText = tempCount;
+    },
+    onActive: () => {
       this.items.forEach((item) => {
         item.show();
       });
-      AppRouter.applyRoute('all');
-    },
-    onActive: () => {
-      AppRouter.applyRoute('active');
+      this.items.forEach((item) => {
+        if (item.checked) {
+          item.hide();
+        }
+      });
+      AppRouter.applyRoute("active");
     },
     onComplete: () => {
-      AppRouter.applyRoute('completed');
+      this.items.forEach((item) => {
+        item.show();
+      });
+      this.items.forEach((item) => {
+        console.log(item.checked);
+        if (!item.checked) {
+          item.hide();
+        }
+      });
+      AppRouter.applyRoute("completed");
     },
     initIdx: 0,
   };
@@ -235,26 +259,23 @@ class MyComponent extends BaseComponent {
       }
     });
 
-    document.getElementById('left-items').innerText = leftItems;
+    document.getElementById("left-items").innerText = leftItems;
 
     const currState = this.$.fetchState();
 
-    const currLeft = document.getElementById('left-items');
+    const currLeft = document.getElementById("left-items");
     let tempCount = 0;
 
     currState.map((item) => {
       this.$.createNoteFromLocalStorage(item.text, item.checked);
       this.$.initIdx++;
-
       if (!item.checked) {
         tempCount++;
       }
     });
 
-    currLeft.innerText = tempCount;
-
-    this.sub('router/options', (opt) => {
-      if (opt.title === 'Active') {
+    this.sub("router/options", (opt) => {
+      if (opt.title === "Active") {
         this.items.forEach((item) => {
           item.show();
         });
@@ -264,7 +285,7 @@ class MyComponent extends BaseComponent {
           }
         });
       }
-      if (opt.title === 'Completed') {
+      if (opt.title === "Completed") {
         this.items.forEach((item) => {
           item.show();
         });
@@ -275,6 +296,8 @@ class MyComponent extends BaseComponent {
         });
       }
     });
+
+    currLeft.innerText = tempCount;
   }
 }
 
@@ -324,4 +347,4 @@ MyComponent.template = `
       </div>
 
     `;
-MyComponent.reg('my-component');
+MyComponent.reg("my-component");
